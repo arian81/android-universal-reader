@@ -73,6 +73,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import android.content.pm.PackageManager
+import androidx.annotation.RequiresApi
+
+
+
+fun NfcAdapter.isSecureNfcEnabledCompat(context: Context): Boolean {
+    return when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+            isSecureNfcEnabled
+        }
+        Build.VERSION.SDK_INT == Build.VERSION_CODES.P -> {
+            // For Android 4.4 (API 19) to 7.1, check if the device supports NFC
+            // and if NFC is enabled
+            val pm = context.packageManager
+            pm.hasSystemFeature(PackageManager.FEATURE_NFC) && isEnabled
+        }
+        else -> {
+            // For versions below Android 4.4, we can't reliably determine if secure NFC is supported
+            // You might want to return false or handle it differently based on your app's requirements
+            false
+        }
+    }
+}
 
 class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
 
@@ -286,7 +309,8 @@ class MainActivity : ComponentActivity(), NfcAdapter.ReaderCallback {
                 NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS)
 
         nfcAdapter?.enableReaderMode(this, this, flags, null)
-        nfcAdapter?.isSecureNfcEnabled()
+        //nfcAdapter?.isSecureNfcEnabled()
+        nfcAdapter?.isSecureNfcEnabledCompat(this)
     }
 
     private fun disableReader() {
